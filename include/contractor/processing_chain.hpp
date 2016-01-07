@@ -2,7 +2,7 @@
 #define PROCESSING_CHAIN_HPP
 
 #include "contractor/contractor.hpp"
-#include "contractor/contractor_options.hpp"
+#include "contractor/contractor_config.hpp"
 #include "contractor/query_edge.hpp"
 #include "extractor/edge_based_edge.hpp"
 #include "util/static_graph.hpp"
