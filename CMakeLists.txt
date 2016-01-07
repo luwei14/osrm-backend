@@ -313,14 +313,16 @@ include_directories(SYSTEM ${LUA_INCLUDE_DIR})
 
 find_package(EXPAT REQUIRED)
 include_directories(SYSTEM ${EXPAT_INCLUDE_DIRS})
-target_link_libraries(osrm-extract ${EXPAT_LIBRARIES})
+target_link_libraries(osrm_extract ${EXPAT_LIBRARIES})
 target_link_libraries(extractor-tests ${EXPAT_LIBRARY})
 
 find_package(STXXL REQUIRED)
 include_directories(SYSTEM ${STXXL_INCLUDE_DIR})
-target_link_libraries(OSRM ${STXXL_LIBRARY})
-target_link_libraries(osrm-extract ${STXXL_LIBRARY})
-target_link_libraries(osrm-prepare ${STXXL_LIBRARY})
+# Libraries
+target_link_libraries(osrm ${STXXL_LIBRARY})
+target_link_libraries(osrm_extract ${STXXL_LIBRARY})
+target_link_libraries(osrm_contract ${STXXL_LIBRARY})
+# Tests
 target_link_libraries(extractor-tests ${STXXL_LIBRARY})
 target_link_libraries(util-tests ${STXXL_LIBRARY})
 
@@ -333,13 +335,16 @@ endif()
 
 find_package(BZip2 REQUIRED)
 include_directories(SYSTEM ${BZIP_INCLUDE_DIRS})
-target_link_libraries(osrm-extract ${BZIP2_LIBRARIES})
+target_link_libraries(osrm_extract ${BZIP2_LIBRARIES})
 target_link_libraries(extractor-tests ${BZIP2_LIBRARIES})
 
 find_package(ZLIB REQUIRED)
 include_directories(SYSTEM ${ZLIB_INCLUDE_DIRS})
-target_link_libraries(osrm-extract ${ZLIB_LIBRARY})
+# Libraries
+target_link_libraries(osrm_extract ${ZLIB_LIBRARY})
+# Binaries
 target_link_libraries(osrm-routed ${ZLIB_LIBRARY})
+# Tests
 target_link_libraries(extractor-tests ${ZLIB_LIBRARY})
 
 if (ENABLE_JSON_LOGGING)
@@ -365,7 +370,7 @@ if(BUILD_TOOLS)
     message(FATAL_ERROR "libgdal and/or development headers not found")
   endif()
   add_executable(osrm-cli src/tools/simpleclient.cpp)
-  target_link_libraries(osrm-cli ${Boost_LIBRARIES} ${OPTIONAL_SOCKET_LIBS} OSRM)
+  target_link_libraries(osrm-cli ${Boost_LIBRARIES} ${OPTIONAL_SOCKET_LIBS} osrm)
   target_link_libraries(osrm-cli ${TBB_LIBRARIES})
   add_executable(osrm-io-benchmark src/tools/io-benchmark.cpp $<TARGET_OBJECTS:UTIL>)
   target_link_libraries(osrm-io-benchmark ${Boost_LIBRARIES})
@@ -403,7 +408,9 @@ install(TARGETS osrm-extract DESTINATION bin)
 install(TARGETS osrm-prepare DESTINATION bin)
 install(TARGETS osrm-datastore DESTINATION bin)
 install(TARGETS osrm-routed DESTINATION bin)
-install(TARGETS OSRM DESTINATION lib)
+install(TARGETS osrm DESTINATION lib)
+install(TARGETS osrm_extract DESTINATION lib)
+install(TARGETS osrm_contract DESTINATION lib)
 
 list(GET Boost_LIBRARIES 1 BOOST_LIBRARY_FIRST)
 get_filename_component(BOOST_LIBRARY_LISTING "${BOOST_LIBRARY_FIRST}" PATH)
