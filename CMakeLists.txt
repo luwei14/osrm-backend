@@ -74,13 +74,17 @@ add_library(PHANTOM OBJECT src/engine/phantom_node.cpp)
 add_dependencies(UTIL FingerPrintConfigure)
 set_target_properties(UTIL PROPERTIES LINKER_LANGUAGE CXX)
 
-add_executable(osrm-extract src/tools/extract.cpp $<TARGET_OBJECTS:EXTRACTOR> $<TARGET_OBJECTS:UTIL>)
-add_executable(osrm-prepare src/tools/contract.cpp $<TARGET_OBJECTS:CONTRACTOR> $<TARGET_OBJECTS:UTIL> $<TARGET_OBJECTS:GRAPH>)
+add_executable(osrm-extract src/tools/extract.cpp)
+add_executable(osrm-prepare src/tools/contract.cpp)
 add_executable(osrm-routed src/tools/routed.cpp $<TARGET_OBJECTS:SERVER> $<TARGET_OBJECTS:UTIL> $<TARGET_OBJECTS:GRAPH>)
 add_executable(osrm-datastore src/tools/datastore.cpp $<TARGET_OBJECTS:UTIL> $<TARGET_OBJECTS:GRAPH>)
-add_library(OSRM $<TARGET_OBJECTS:ENGINE> $<TARGET_OBJECTS:UTIL> $<TARGET_OBJECTS:GRAPH>)
+add_library(osrm $<TARGET_OBJECTS:ENGINE> $<TARGET_OBJECTS:UTIL> $<TARGET_OBJECTS:GRAPH>)
+add_library(osrm_extract $<TARGET_OBJECTS:EXTRACTOR> $<TARGET_OBJECTS:UTIL> $<TARGET_OBJECTS:GRAPH>)
+add_library(osrm_contract $<TARGET_OBJECTS:CONTRACTOR> $<TARGET_OBJECTS:UTIL> $<TARGET_OBJECTS:GRAPH>)
 
-target_link_libraries(osrm-routed OSRM)
+target_link_libraries(osrm-extract osrm_extract)
+target_link_libraries(osrm-prepare osrm_contract)
+target_link_libraries(osrm-routed osrm)
 
 # Unit tests
 add_executable(engine-tests EXCLUDE_FROM_ALL unit_tests/engine_tests.cpp ${EngineTestsGlob} $<TARGET_OBJECTS:ENGINE> $<TARGET_OBJECTS:UTIL> $<TARGET_OBJECTS:GRAPH>)
@@ -221,9 +225,9 @@ if(APPLE)
 endif()
 
 if(UNIX AND NOT APPLE)
-  target_link_libraries(osrm-prepare rt)
+  target_link_libraries(osrm_contract rt)
   target_link_libraries(osrm-datastore rt)
-  target_link_libraries(OSRM rt)
+  target_link_libraries(osrm rt)
   target_link_libraries(engine-tests rt)
 endif()
 
@@ -241,11 +245,16 @@ if(NOT Boost_FOUND)
 endif()
 include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
-target_link_libraries(OSRM ${Boost_LIBRARIES})
+# Libaries
+target_link_libraries(osrm ${Boost_LIBRARIES})
+target_link_libraries(osrm_extract ${Boost_LIBRARIES})
+target_link_libraries(osrm_contract ${Boost_LIBRARIES})
+# Binaries
 target_link_libraries(osrm-extract ${Boost_LIBRARIES})
 target_link_libraries(osrm-prepare ${Boost_LIBRARIES})
-target_link_libraries(osrm-routed ${Boost_LIBRARIES} ${OPTIONAL_SOCKET_LIBS} OSRM)
+target_link_libraries(osrm-routed ${Boost_LIBRARIES} ${OPTIONAL_SOCKET_LIBS})
 target_link_libraries(osrm-datastore ${Boost_LIBRARIES})
+# Tests
 target_link_libraries(engine-tests ${Boost_LIBRARIES})
 target_link_libraries(extractor-tests ${Boost_LIBRARIES})
 target_link_libraries(util-tests ${Boost_LIBRARIES})
@@ -253,35 +262,42 @@ target_link_libraries(rtree-bench ${Boost_LIBRARIES})
 target_link_libraries(io-tests ${Boost_LIBRARIES})
 
 find_package(Threads REQUIRED)
-target_link_libraries(osrm-extract ${CMAKE_THREAD_LIBS_INIT})
+# Libraries
+target_link_libraries(osrm ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(osrm_extract ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(osrm_contract ${CMAKE_THREAD_LIBS_INIT})
+# Binaries
 target_link_libraries(osrm-datastore ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(osrm-prepare ${CMAKE_THREAD_LIBS_INIT})
-target_link_libraries(OSRM ${CMAKE_THREAD_LIBS_INIT})
+# Tests
 target_link_libraries(engine-tests ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(extractor-tests ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(util-tests ${CMAKE_THREAD_LIBS_INIT})
 target_link_libraries(rtree-bench ${CMAKE_THREAD_LIBS_INIT})
 
 find_package(TBB REQUIRED)
+include_directories(SYSTEM ${TBB_INCLUDE_DIR})
 if(WIN32 AND CMAKE_BUILD_TYPE MATCHES Debug)
   set(TBB_LIBRARIES ${TBB_DEBUG_LIBRARIES})
 endif()
+# Libraries
+target_link_libraries(osrm_extract ${TBB_LIBRARIES})
+target_link_libraries(osrm_contract ${TBB_LIBRARIES})
+# Binaries
 target_link_libraries(osrm-datastore ${TBB_LIBRARIES})
-target_link_libraries(osrm-extract ${TBB_LIBRARIES})
-target_link_libraries(osrm-prepare ${TBB_LIBRARIES})
-target_link_libraries(osrm-routed ${TBB_LIBRARIES})
+# Tests
 target_link_libraries(engine-tests ${TBB_LIBRARIES})
 target_link_libraries(extractor-tests ${TBB_LIBRARIES})
 target_link_libraries(util-tests ${TBB_LIBRARIES})
 target_link_libraries(rtree-bench ${TBB_LIBRARIES})
-include_directories(SYSTEM ${TBB_INCLUDE_DIR})
 
 find_package( Luabind REQUIRED )
 include(check_luabind)
-
 include_directories(SYSTEM ${LUABIND_INCLUDE_DIR})
-target_link_libraries(osrm-extract ${LUABIND_LIBRARY})
-target_link_libraries(osrm-prepare ${LUABIND_LIBRARY})
+
+# Libraries
+target_link_libraries(osrm_extract ${LUABIND_LIBRARY})
+target_link_libraries(osrm_contract ${LUABIND_LIBRARY})
+# Tests
 target_link_libraries(extractor-tests ${LUABIND_LIBRARY})
 
 if(LUAJIT_FOUND)
