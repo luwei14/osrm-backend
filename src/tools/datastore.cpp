@@ -9,8 +9,8 @@
 #include "engine/datafacade/datafacade_base.hpp"
 #include "extractor/travel_mode.hpp"
 #include "extractor/turn_instructions.hpp"
-#include "engine/datafacade/shared_datatype.hpp"
-#include "engine/datafacade/shared_barriers.hpp"
+#include "datastore/shared_datatype.hpp"
+#include "datastore/shared_barriers.hpp"
 #include "util/datastore_options.hpp"
 #include "util/fingerprint.hpp"
 #include "util/osrm_exception.hpp"
@@ -33,7 +33,6 @@
 #include <string>
 
 // FIXME remove after move to datastore
-using namespace osrm::engine::datafacade;
 using namespace osrm::datastore;
 using namespace osrm;
 
@@ -189,19 +188,19 @@ int main(const int argc, const char *argv[]) try
 
     // determine segment to use
     bool segment2_in_use = SharedMemory::RegionExists(LAYOUT_2);
-    const engine::datafacade::SharedDataType layout_region = [&]
+    const datastore::SharedDataType layout_region = [&]
     {
         return segment2_in_use ? LAYOUT_1 : LAYOUT_2;
     }();
-    const engine::datafacade::SharedDataType data_region = [&]
+    const datastore::SharedDataType data_region = [&]
     {
         return segment2_in_use ? DATA_1 : DATA_2;
     }();
-    const engine::datafacade::SharedDataType previous_layout_region = [&]
+    const datastore::SharedDataType previous_layout_region = [&]
     {
         return segment2_in_use ? LAYOUT_2 : LAYOUT_1;
     }();
-    const engine::datafacade::SharedDataType previous_data_region = [&]
+    const datastore::SharedDataType previous_data_region = [&]
     {
         return segment2_in_use ? DATA_2 : DATA_1;
     }();

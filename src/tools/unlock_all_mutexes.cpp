@@ -1,5 +1,5 @@
 #include "util/simple_logger.hpp"
-#include "engine/datafacade/shared_barriers.hpp"
+#include "datastore/shared_barriers.hpp"
 
 #include <iostream>
 
@@ -9,7 +9,7 @@ int main()
     try
     {
         osrm::util::SimpleLogger().Write() << "Releasing all locks";
-        osrm::engine::datafacade::SharedBarriers barrier;
+        osrm::datastore::SharedBarriers barrier;
         barrier.pending_update_mutex.unlock();
         barrier.query_mutex.unlock();
         barrier.update_mutex.unlock();

@@ -9,7 +9,7 @@
 #include "engine/plugins/match.hpp"
 #include "engine/datafacade/datafacade_base.hpp"
 #include "engine/datafacade/internal_datafacade.hpp"
-#include "engine/datafacade/shared_barriers.hpp"
+#include "datastore/shared_barriers.hpp"
 #include "engine/datafacade/shared_datafacade.hpp"
 #include "util/make_unique.hpp"
 #include "util/routed_options.hpp"
@@ -37,7 +37,7 @@ OSRM::OSRM_impl::OSRM_impl(LibOSRMConfig &lib_config)
 {
     if (lib_config.use_shared_memory)
     {
-        barrier = util::make_unique<datafacade::SharedBarriers>();
+        barrier = util::make_unique<datastore::SharedBarriers>();
         query_data_facade = new datafacade::SharedDataFacade<contractor::QueryEdge::EdgeData>();
     }
     else

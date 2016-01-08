@@ -1,7 +1,7 @@
 #include <cstdio>
 
 #include "datastore/shared_memory_factory.hpp"
-#include "engine/datafacade/shared_datatype.hpp"
+#include "datastore/shared_datatype.hpp"
 #include "util/simple_logger.hpp"
 
 namespace osrm
@@ -11,7 +11,6 @@ namespace tools
 
 // FIXME remove after folding back into datastore
 using namespace datastore;
-using namespace engine::datafacade;
 
 void deleteRegion(const SharedDataType region)
 {

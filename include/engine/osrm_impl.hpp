@@ -14,6 +14,11 @@
 namespace osrm
 {
 
+namespace datastore
+{
+struct SharedBarriers;
+}
+
 namespace util
 {
 namespace json
@@ -29,10 +34,8 @@ namespace plugins
 {
 class BasePlugin;
 }
-
 namespace datafacade
 {
-struct SharedBarriers;
 template <class EdgeDataT> class BaseDataFacade;
 }
 
@@ -50,7 +53,7 @@ class OSRM::OSRM_impl final
     void RegisterPlugin(plugins::BasePlugin *plugin);
     PluginMap plugin_map;
     // will only be initialized if shared memory is used
-    std::unique_ptr<datafacade::SharedBarriers> barrier;
+    std::unique_ptr<datastore::SharedBarriers> barrier;
     // base class pointer to the objects
     datafacade::BaseDataFacade<contractor::QueryEdge::EdgeData> *query_data_facade;
 
