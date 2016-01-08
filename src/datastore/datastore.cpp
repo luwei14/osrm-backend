@@ -561,7 +561,6 @@ int Datastore::Run()
     deleteRegion(previous_layout_region);
     util::SimpleLogger().Write() << "all data loaded";
 
-    shared_layout_ptr->PrintInformation();
     return EXIT_SUCCESS;
 }
 }
