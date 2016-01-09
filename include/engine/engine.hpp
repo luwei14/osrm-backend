@@ -1,5 +1,5 @@
-#ifndef OSRM_IMPL_HPP
-#define OSRM_IMPL_HPP
+#ifndef ENGINE_HPP
+#define ENGINE_HPP
 
 #include "contractor/query_edge.hpp"
 
@@ -39,14 +39,14 @@ namespace datafacade
 template <class EdgeDataT> class BaseDataFacade;
 }
 
-class OSRM::OSRM_impl final
+class Engine final
 {
   private:
     using PluginMap = std::unordered_map<std::string, std::unique_ptr<plugins::BasePlugin>>;
 
   public:
-    OSRM_impl(LibOSRMConfig &lib_config);
-    OSRM_impl(const OSRM_impl &) = delete;
+    Engine(EngineConfig &config_);
+    Engine(const Engine &) = delete;
     int RunQuery(const RouteParameters &route_parameters, util::json::Object &json_result);
 
   private:

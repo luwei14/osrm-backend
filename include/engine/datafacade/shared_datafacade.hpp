@@ -303,8 +303,6 @@ template <class EdgeDataT> class SharedDataFacade final : public BaseDataFacade<
                 LoadNames();
                 LoadCoreInformation();
 
-                data_layout->PrintInformation();
-
                 util::SimpleLogger().Write() << "number of geometries: " << m_coordinate_list->size();
                 for (unsigned i = 0; i < m_coordinate_list->size(); ++i)
                 {
