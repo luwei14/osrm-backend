@@ -4,7 +4,6 @@
 #include "contractor/query_edge.hpp"
 
 #include "osrm/json_container.hpp"
-#include "osrm/libosrm_config.hpp"
 #include "osrm/osrm.hpp"
 
 #include <memory>
@@ -29,6 +28,7 @@ struct Object;
 
 namespace engine
 {
+struct EngineConfig;
 struct RouteParameters;
 namespace plugins
 {
