@@ -6,7 +6,7 @@
 
 namespace osrm
 {
-namespace datastore
+namespace storage
 {
 struct SharedBarriers
 {

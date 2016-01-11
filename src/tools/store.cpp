@@ -1,4 +1,4 @@
-#include "datastore/datastore.hpp"
+#include "storage/storage.hpp"
 #include "util/osrm_exception.hpp"
 #include "util/simple_logger.hpp"
 #include "util/typedefs.hpp"
@@ -13,7 +13,7 @@ using namespace osrm;
 // generate boost::program_options object for the routing part
 bool generateDataStoreOptions(const int argc,
                               const char *argv[],
-                              datastore::DataPaths &paths)
+                              storage::DataPaths &paths)
 {
     // declare a group of options that will be allowed only on command line
     boost::program_options::options_description generic_options("Options");
@@ -255,14 +255,14 @@ int main(const int argc, const char *argv[]) try
 {
     util::LogPolicy::GetInstance().Unmute();
 
-    datastore::DataPaths paths;
+    storage::DataPaths paths;
     if (!generateDataStoreOptions(argc, argv, paths))
     {
         return EXIT_SUCCESS;
     }
 
-    datastore::Datastore store(paths);
-    return store.Run();
+    storage::Storage storage(paths);
+    return storage.Run();
 }
 catch (const std::bad_alloc &e)
 {

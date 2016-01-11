@@ -1,5 +1,5 @@
-#ifndef DATASTORE_DATASTORE_HPP
-#define DATASTORE_DATASTORE_HPP
+#ifndef STORAGE_HPP
+#define STORAGE_HPP
 
 #include <boost/filesystem.hpp>
 
@@ -7,13 +7,13 @@
 
 namespace osrm
 {
-namespace datastore
+namespace storage
 {
 using DataPaths = std::unordered_map<std::string, boost::filesystem::path>;
-class Datastore
+class Storage
 {
 public:
-    Datastore(const DataPaths& data_paths);
+    Storage(const DataPaths& data_paths);
     int Run();
 private:
     DataPaths paths;

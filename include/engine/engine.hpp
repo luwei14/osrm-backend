@@ -14,7 +14,7 @@
 namespace osrm
 {
 
-namespace datastore
+namespace storage
 {
 struct SharedBarriers;
 }
@@ -53,7 +53,7 @@ class Engine final
     void RegisterPlugin(plugins::BasePlugin *plugin);
     PluginMap plugin_map;
     // will only be initialized if shared memory is used
-    std::unique_ptr<datastore::SharedBarriers> barrier;
+    std::unique_ptr<storage::SharedBarriers> barrier;
     // base class pointer to the objects
     datafacade::BaseDataFacade<contractor::QueryEdge::EdgeData> *query_data_facade;
 

@@ -9,10 +9,12 @@
 #include "engine/plugins/trip.hpp"
 #include "engine/plugins/viaroute.hpp"
 #include "engine/plugins/match.hpp"
+
 #include "engine/datafacade/datafacade_base.hpp"
 #include "engine/datafacade/internal_datafacade.hpp"
-#include "datastore/shared_barriers.hpp"
 #include "engine/datafacade/shared_datafacade.hpp"
+
+#include "storage/shared_barriers.hpp"
 #include "util/make_unique.hpp"
 #include "util/routed_options.hpp"
 #include "util/simple_logger.hpp"
@@ -35,7 +37,7 @@ Engine::Engine(EngineConfig &config)
 {
     if (config.use_shared_memory)
     {
-        barrier = util::make_unique<datastore::SharedBarriers>();
+        barrier = util::make_unique<storage::SharedBarriers>();
         query_data_facade = new datafacade::SharedDataFacade<contractor::QueryEdge::EdgeData>();
     }
     else

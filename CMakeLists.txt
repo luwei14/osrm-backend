@@ -56,7 +56,7 @@ configure_file(
 file(GLOB UtilGlob src/util/*.cpp)
 file(GLOB ExtractorGlob src/extractor/*.cpp)
 file(GLOB ContractorGlob src/contractor/*.cpp)
-file(GLOB StorageGlob src/datastore/*.cpp)
+file(GLOB StorageGlob src/storage/*.cpp)
 file(GLOB ServerGlob src/server/*.cpp src/server/**/*.cpp)
 file(GLOB EngineGlob src/engine/*.cpp src/engine/**/*.cpp)
 file(GLOB ExtractorTestsGlob unit_tests/extractor/*.cpp)

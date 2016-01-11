@@ -8,10 +8,10 @@
 #include "engine/datafacade/datafacade_base.hpp"
 #include "extractor/travel_mode.hpp"
 #include "extractor/turn_instructions.hpp"
-#include "datastore/datastore.hpp"
-#include "datastore/shared_datatype.hpp"
-#include "datastore/shared_barriers.hpp"
-#include "datastore/shared_memory_factory.hpp"
+#include "storage/storage.hpp"
+#include "storage/shared_datatype.hpp"
+#include "storage/shared_barriers.hpp"
+#include "storage/shared_memory.hpp"
 #include "util/fingerprint.hpp"
 #include "util/osrm_exception.hpp"
 #include "util/simple_logger.hpp"
@@ -34,7 +34,7 @@
 
 namespace osrm
 {
-namespace datastore
+namespace storage
 {
 
 using RTreeLeaf =
@@ -74,9 +74,9 @@ void deleteRegion(const SharedDataType region)
     }
 }
 
-Datastore::Datastore(const DataPaths &paths_) : paths(paths_) {}
+Storage::Storage(const DataPaths &paths_) : paths(paths_) {}
 
-int Datastore::Run()
+int Storage::Run()
 {
     util::LogPolicy::GetInstance().Unmute();
     SharedBarriers barrier;
@@ -175,25 +175,25 @@ int Datastore::Run()
 
     // determine segment to use
     bool segment2_in_use = SharedMemory::RegionExists(LAYOUT_2);
-    const datastore::SharedDataType layout_region = [&]
+    const storage::SharedDataType layout_region = [&]
     {
         return segment2_in_use ? LAYOUT_1 : LAYOUT_2;
     }();
-    const datastore::SharedDataType data_region = [&]
+    const storage::SharedDataType data_region = [&]
     {
         return segment2_in_use ? DATA_1 : DATA_2;
     }();
-    const datastore::SharedDataType previous_layout_region = [&]
+    const storage::SharedDataType previous_layout_region = [&]
     {
         return segment2_in_use ? LAYOUT_2 : LAYOUT_1;
     }();
-    const datastore::SharedDataType previous_data_region = [&]
+    const storage::SharedDataType previous_data_region = [&]
     {
         return segment2_in_use ? DATA_2 : DATA_1;
     }();
 
     // Allocate a memory layout in shared memory, deallocate previous
-    auto *layout_memory = SharedMemoryFactory::Get(layout_region, sizeof(SharedDataLayout));
+    auto *layout_memory = makeSharedMemory(layout_region, sizeof(SharedDataLayout));
     auto shared_layout_ptr = new (layout_memory->Ptr()) SharedDataLayout();
 
     shared_layout_ptr->SetBlockSize<char>(SharedDataLayout::FILE_INDEX_PATH,
@@ -332,7 +332,7 @@ int Datastore::Run()
     util::SimpleLogger().Write() << "allocating shared memory of "
                                  << shared_layout_ptr->GetSizeOfLayout() << " bytes";
     SharedMemory *shared_memory =
-        SharedMemoryFactory::Get(data_region, shared_layout_ptr->GetSizeOfLayout());
+        makeSharedMemory(data_region, shared_layout_ptr->GetSizeOfLayout());
     char *shared_memory_ptr = static_cast<char *>(shared_memory->Ptr());
 
     // read actual data into shared memory object //
@@ -541,7 +541,7 @@ int Datastore::Run()
 
     // acquire lock
     SharedMemory *data_type_memory =
-        SharedMemoryFactory::Get(CURRENT_REGIONS, sizeof(SharedDataTimestamp), true, false);
+        makeSharedMemory(CURRENT_REGIONS, sizeof(SharedDataTimestamp), true, false);
     SharedDataTimestamp *data_timestamp_ptr =
         static_cast<SharedDataTimestamp *>(data_type_memory->Ptr());
 

@@ -10,7 +10,7 @@
 
 namespace osrm
 {
-namespace datastore
+namespace storage
 {
 
 // Added at the start and end of each block as sanity check
