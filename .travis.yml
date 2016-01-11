@@ -135,8 +135,13 @@ script:
   - make --jobs=2
   - make tests --jobs=2
   - make benchmarks
+  - sudo make install
   - ./extractor-tests
   - ./engine-tests
   - ./util-tests
   - cd ..
   - cucumber -p verify
+  - mkdir example/build && cd example/build
+  - cmake ..
+  - make
+  - ./osrm-example
