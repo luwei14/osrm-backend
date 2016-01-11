@@ -1,4 +1,4 @@
-#include "contractor/processing_chain.hpp"
+#include "contractor/contractor.hpp"
 #include "contractor/contractor_config.hpp"
 #include "util/simple_logger.hpp"
 #include "util/version.hpp"
@@ -179,7 +179,7 @@ int main(int argc, char *argv[]) try
 
     tbb::task_scheduler_init init(contractor_config.requested_num_threads);
 
-    return contractor::Prepare(contractor_config).Run();
+    return contractor::Contractor(contractor_config).Run();
 }
 catch (const std::bad_alloc &e)
 {
