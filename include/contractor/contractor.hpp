@@ -1,6 +1,8 @@
 #ifndef PROCESSING_CHAIN_HPP
 #define PROCESSING_CHAIN_HPP
 
+#include "extractor/edge_based_edge.hpp"
+#include "extractor/node_based_edge.hpp"
 #include "contractor/contractor.hpp"
 #include "contractor/contractor_config.hpp"
 #include "contractor/query_edge.hpp"
@@ -21,6 +23,7 @@ namespace extractor
 {
 struct SpeedProfileProperties;
 struct EdgeBasedNode;
+struct EdgeBasedEdge;
 }
 namespace contractor
 {
