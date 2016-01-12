@@ -13,13 +13,13 @@ clean:
 berlin-latest.osm.pbf:
 	wget $(BERLIN_URL) -O berlin-latest.osm.pbf
 
-berlin-latest.osrm: berlin-latest.osm.pbf car.lua $(OSRM_EXTRACT)
+berlin-latest.osrm: berlin-latest.osm.pbf $(PROFILE) $(OSRM_EXTRACT)
 	@echo "Verifiyng data file integrity..."
 	md5sum -c data.md5sum
 	@echo "Running osrm-extract..."
 	$(OSRM_EXTRACT) berlin-latest.osm.pbf -p $(PROFILE)
 
-berlin-latest.osrm.hsgr: berlin-latest.osrm car.lua $(OSRM_PREPARE)
+berlin-latest.osrm.hsgr: berlin-latest.osrm $(PROFILE) $(OSRM_PREPARE)
 	@echo "Running osrm-prepare..."
 	$(OSRM_PREPARE) berlin-latest.osrm -p $(PROFILE)
 
