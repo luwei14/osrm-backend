@@ -141,7 +141,8 @@ script:
   - ./util-tests
   - cd ..
   - cucumber -p verify
+  - make -C test/data
   - mkdir example/build && cd example/build
   - cmake ..
   - make
-  - ./osrm-example
+  - ./osrm-example ../../test/data/berlin-latest.osrm
