@@ -9,6 +9,7 @@ endif()
 project(osrm-example CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ")
 
 set(bitness 32)
 if(CMAKE_SIZEOF_VOID_P EQUAL 8)
