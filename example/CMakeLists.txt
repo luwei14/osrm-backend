@@ -23,8 +23,12 @@ if(WIN32 AND MSVC_VERSION LESS 1800)
   message(FATAL_ERROR "Building with Microsoft compiler needs Visual Studio 2013 or later (Express version works too)")
 endif()
 
-find_library(LibOSRM REQUIRED)
 add_executable(osrm-example example.cpp)
-target_link_libraries(osrm-example ${LibOSRM_LIBRARIES})
-include_directories(SYSTEM ${LibOSRM_INCLUDE_DIRS})
+
+find_package(LibOSRM REQUIRED)
+find_package(Boost 1.49.0 COMPONENTS filesystem system thread REQUIRED)
+find_package(Threads REQUIRED)
+
+target_link_libraries(osrm-example rt ${LibOSRM_LIBRARIES} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+include_directories(SYSTEM ${LibOSRM_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 

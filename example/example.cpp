@@ -4,8 +4,8 @@
 #include "osrm/osrm.hpp"
 
 #include <string>
-#include <iostream>
 #include <utility>
+#include <iostream>
 #include <exception>
 
 int main(int argc, const char *argv[]) try

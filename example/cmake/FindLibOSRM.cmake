@@ -19,7 +19,7 @@ find_path(LibOSRM_INCLUDE_DIR osrm/osrm.hpp
   /opt/local
   /opt)
 
-find_library(LibOSRM_LIBRARY Names OSRM libosrm
+find_library(LibOSRM_LIBRARY Names osrm libosrm
   PATH_SUFFIXES osrm lib/osrm lib
   HINTS ${PC_LibOSRM_LIBDIR} ${PC_LibOSRM_LIBRARY_DIRS}
   ~/Library/Frameworks
