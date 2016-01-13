@@ -83,11 +83,6 @@ add_library(osrm_extract $<TARGET_OBJECTS:EXTRACTOR> $<TARGET_OBJECTS:UTIL>)
 add_library(osrm_contract $<TARGET_OBJECTS:CONTRACTOR> $<TARGET_OBJECTS:UTIL>)
 add_library(osrm_store $<TARGET_OBJECTS:STORAGE> $<TARGET_OBJECTS:UTIL>)
 
-target_link_libraries(osrm-extract osrm_extract)
-target_link_libraries(osrm-prepare osrm_contract)
-target_link_libraries(osrm-datastore osrm_store)
-target_link_libraries(osrm-routed osrm)
-
 # Unit tests
 add_executable(engine-tests EXCLUDE_FROM_ALL unit_tests/engine_tests.cpp ${EngineTestsGlob} $<TARGET_OBJECTS:ENGINE> $<TARGET_OBJECTS:UTIL>)
 add_executable(extractor-tests EXCLUDE_FROM_ALL unit_tests/extractor_tests.cpp ${ExtractorTestsGlob} $<TARGET_OBJECTS:EXTRACTOR> $<TARGET_OBJECTS:UTIL>)
