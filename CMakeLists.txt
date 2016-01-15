@@ -326,7 +326,7 @@ set(UTIL_LIBRARIES
     ${STXXL_LIBRARY}
     ${TBB_LIBRARIES})
 # Libraries
-target_link_libraries(osrm ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} ${STXXL_LIBRARY})
+target_link_libraries(osrm ${ENGINE_LIBRARIES})
 target_link_libraries(osrm_contract ${CONTRACTOR_LIBRARIES})
 target_link_libraries(osrm_extract ${EXTRACTOR_LIBRARIES})
 target_link_libraries(osrm_store ${STORAGE_LIBRARIES})
