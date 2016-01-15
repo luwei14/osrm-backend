@@ -29,6 +29,6 @@ find_package(LibOSRM REQUIRED)
 find_package(Boost 1.49.0 COMPONENTS filesystem system thread REQUIRED)
 find_package(Threads REQUIRED)
 
-target_link_libraries(osrm-example rt ${LibOSRM_LIBRARIES} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(osrm-example ${LibOSRM_LIBRARIES} ${Boost_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT} rt)
 include_directories(SYSTEM ${LibOSRM_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
