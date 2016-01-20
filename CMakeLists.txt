@@ -221,10 +221,7 @@ if(APPLE)
 endif()
 
 if(UNIX AND NOT APPLE)
-  target_link_libraries(osrm_contract rt)
-  target_link_libraries(osrm_store rt)
-  target_link_libraries(osrm rt)
-  target_link_libraries(engine-tests rt)
+  set(MAYBE_RT_LIBRARY rt)
 endif()
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/third_party/libosmium/cmake")
@@ -310,16 +307,19 @@ set(CONTRACTOR_LIBRARIES
     ${LUABIND_LIBRARY}
     ${USED_LUA_LIBRARIES}
     ${STXXL_LIBRARY}
-    ${TBB_LIBRARIES})
+    ${TBB_LIBRARIES}
+    ${MAYBE_RT_LIBRARY})
 set(ENGINE_LIBRARIES
     ${Boost_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
     ${STXXL_LIBRARY}
-    ${TBB_LIBRARIES})
+    ${TBB_LIBRARIES}
+    ${MAYBE_RT_LIBRARY})
 set(STORAGE_LIBRARIES
     ${Boost_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
-    ${TBB_LIBRARIES})
+    ${TBB_LIBRARIES}
+    ${MAYBE_RT_LIBRARY})
 set(UTIL_LIBRARIES
     ${Boost_LIBRARIES}
     ${CMAKE_THREAD_LIBS_INIT}
@@ -396,21 +396,13 @@ install(TARGETS osrm_extract DESTINATION lib)
 install(TARGETS osrm_contract DESTINATION lib)
 install(TARGETS osrm_store DESTINATION lib)
 
-list(GET Boost_LIBRARIES 1 BOOST_LIBRARY_FIRST)
-get_filename_component(BOOST_LIBRARY_LISTING "${BOOST_LIBRARY_FIRST}" PATH)
-set(BOOST_LIBRARY_LISTING "-L${BOOST_LIBRARY_LISTING}")
-foreach(lib ${Boost_LIBRARIES})
-  get_filename_component(BOOST_LIBRARY_NAME "${lib}" NAME_WE)
-  string(REPLACE "lib" "" BOOST_LIBRARY_NAME ${BOOST_LIBRARY_NAME})
-  set(BOOST_LIBRARY_LISTING "${BOOST_LIBRARY_LISTING} -l${BOOST_LIBRARY_NAME}")
-endforeach()
-list(GET TBB_LIBRARIES 1 TBB_LIBRARY_FIRST)
-get_filename_component(TBB_LIBRARY_LISTING "${TBB_LIBRARY_FIRST}" PATH)
-set(TBB_LIBRARY_LISTING "-L${TBB_LIBRARY_LISTING}")
-foreach(lib ${TBB_LIBRARIES})
-  get_filename_component(TBB_LIBRARY_NAME "${lib}" NAME_WE)
-  string(REPLACE "lib" "" TBB_LIBRARY_NAME ${TBB_LIBRARY_NAME})
-  set(TBB_LIBRARY_LISTING "${TBB_LIBRARY_LISTING} -l${TBB_LIBRARY_NAME}")
+list(GET ENGINE_LIBRARIES 1 ENGINE_LIBRARY_FIRST)
+foreach(lib ${ENGINE_LIBRARIES})
+  get_filename_component(ENGINE_LIBRARY_PATH "${ENGINE_LIBRARY_FIRST}" PATH)
+  get_filename_component(ENGINE_LIBRARY_NAME "${lib}" NAME_WE)
+  string(REPLACE "lib" "" ENGINE_LIBRARY_NAME ${ENGINE_LIBRARY_NAME})
+  string(REPLACE "-l" "" ENGINE_LIBRARY_NAME ${ENGINE_LIBRARY_NAME})
+  set(ENGINE_LIBRARY_LISTING "${ENGINE_LIBRARY_LISTING} -L${ENGINE_LIBRARY_PATH} -l${ENGINE_LIBRARY_NAME}")
 endforeach()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/cmake/pkgconfig.in libosrm.pc @ONLY)

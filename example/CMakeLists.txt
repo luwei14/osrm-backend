@@ -27,13 +27,7 @@ add_executable(osrm-example example.cpp)
 
 find_package(LibOSRM REQUIRED)
 find_package(Boost 1.49.0 COMPONENTS filesystem system thread REQUIRED)
-find_package(Threads REQUIRED)
-find_package(TBB REQUIRED)
-include_directories(SYSTEM ${TBB_INCLUDE_DIR})
 
-target_link_libraries(osrm-example ${LibOSRM_LIBRARIES} ${Boost_LIBRARIES} ${TBB_LIBRARIES} ${CMAKE_THREAD_LIBS_INIT})
-if(UNIX AND NOT APPLE)
-  target_link_libraries(osrm-example rt)
-endif()
+target_link_libraries(osrm-example ${LibOSRM_LIBRARIES})
 include_directories(SYSTEM ${LibOSRM_INCLUDE_DIRS} ${Boost_INCLUDE_DIRS})
 
