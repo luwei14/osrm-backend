@@ -1,5 +1,5 @@
-#ifndef CONTRACTOR_HPP
-#define CONTRACTOR_HPP
+#ifndef GRAPH_CONTRACTOR_HPP
+#define GRAPH_CONTRACTOR_HPP
 
 #include "util/binary_heap.hpp"
 #include "util/deallocating_vector.hpp"

@@ -232,9 +232,10 @@ template <class EdgeDataT> class SharedDataFacade final : public BaseDataFacade<
         {
             throw util::exception("No shared memory blocks found, have you forgotten to run osrm-datastore?");
         }
-        data_timestamp_ptr = (storage::SharedDataTimestamp *)storage::makeSharedMemory(
-                                 storage::CURRENT_REGIONS, sizeof(storage::SharedDataTimestamp), false, false)
-                                 ->Ptr();
+        data_timestamp_ptr = static_cast<storage::SharedDataTimestamp *>(
+            storage::makeSharedMemory(storage::CURRENT_REGIONS,
+                                      sizeof(storage::SharedDataTimestamp), false, false)
+                ->Ptr());
         CURRENT_LAYOUT = storage::LAYOUT_NONE;
         CURRENT_DATA = storage::DATA_NONE;
         CURRENT_TIMESTAMP = 0;

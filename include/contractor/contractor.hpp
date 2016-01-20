@@ -1,5 +1,5 @@
-#ifndef PROCESSING_CHAIN_HPP
-#define PROCESSING_CHAIN_HPP
+#ifndef CONTRACTOR_CONTRACTOR_HPP
+#define CONTRACTOR_CONTRACTOR_HPP
 
 #include "extractor/edge_based_edge.hpp"
 #include "extractor/node_based_edge.hpp"

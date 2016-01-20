@@ -14,7 +14,7 @@ struct ContractorConfig
 {
     ContractorConfig() : requested_num_threads(0) {}
 
-    // Interferse the output names from the path of the .osrm file
+    // Infer the output names from the path of the .osrm file
     void UseDefaultOutputNames()
     {
         level_output_path = osrm_input_path.string() + ".level";
