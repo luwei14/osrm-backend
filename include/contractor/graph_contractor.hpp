@@ -33,7 +33,6 @@ namespace contractor
 
 class GraphContractor
 {
-
   private:
     struct ContractorEdgeData
     {
@@ -64,10 +63,11 @@ class GraphContractor
 
     struct ContractorHeapData
     {
-        short hop;
-        bool target;
-        ContractorHeapData() : hop(0), target(false) {}
-        ContractorHeapData(short h, bool t) : hop(h), target(t) {}
+        ContractorHeapData() {}
+        ContractorHeapData(short hop_, bool target_) : hop(hop_), target(target_) {}
+
+        short hop = 0;
+        bool target = false;
     };
 
     using ContractorGraph = util::DynamicGraph<ContractorEdgeData>;
@@ -89,11 +89,7 @@ class GraphContractor
         explicit ContractorThreadData(NodeID nodes) : heap(nodes) {}
     };
 
-    struct NodePriorityData
-    {
-        int depth;
-        NodePriorityData() : depth(0) {}
-    };
+    using NodeDepth = int;
 
     struct ContractionStats
     {
@@ -243,53 +239,28 @@ class GraphContractor
                 }
             }
         }
-        std::cout << "merged " << edges.size() - edge << " edges out of " << edges.size()
-                  << std::endl;
+        util::SimpleLogger().Write() << "merged " << edges.size() - edge << " edges out of " << edges.size();
         edges.resize(edge);
         contractor_graph = std::make_shared<ContractorGraph>(nodes, edges);
         edges.clear();
         edges.shrink_to_fit();
 
         BOOST_ASSERT(0 == edges.capacity());
-        //        unsigned maxdegree = 0;
-        //        NodeID highestNode = 0;
-        //
-        //        for(unsigned i = 0; i < contractor_graph->GetNumberOfNodes(); ++i) {
-        //            unsigned degree = contractor_graph->EndEdges(i) -
-        //            contractor_graph->BeginEdges(i);
-        //            if(degree > maxdegree) {
-        //                maxdegree = degree;
-        //                highestNode = i;
-        //            }
-        //        }
-        //
-        //        util::SimpleLogger().Write() << "edges at node with id " << highestNode << " has
-        //        degree
-        //        " << maxdegree;
-        //        for(unsigned i = contractor_graph->BeginEdges(highestNode); i <
-        //        contractor_graph->EndEdges(highestNode); ++i) {
-        //            util::SimpleLogger().Write() << " ->(" << highestNode << "," <<
-        //            contractor_graph->GetTarget(i)
-        //            << "); via: " << contractor_graph->GetEdgeData(i).via;
-        //        }
-
-        std::cout << "contractor finished initalization" << std::endl;
+        util::SimpleLogger().Write() << "contractor finished initalization";
     }
-
-    ~GraphContractor() {}
 
     void Run(double core_factor = 1.0)
     {
         // for the preperation we can use a big grain size, which is much faster (probably cache)
-        constexpr size_t InitGrainSize = 100000;
-        constexpr size_t PQGrainSize = 100000;
+        const constexpr size_t InitGrainSize = 100000;
+        const constexpr size_t PQGrainSize = 100000;
         // auto_partitioner will automatically increase the blocksize if we have
         // a lot of data. It is *important* for the last loop iterations
         // (which have a very small dataset) that it is devisible.
-        constexpr size_t IndependentGrainSize = 1;
-        constexpr size_t ContractGrainSize = 1;
-        constexpr size_t NeighboursGrainSize = 1;
-        constexpr size_t DeleteGrainSize = 1;
+        const constexpr size_t IndependentGrainSize = 1;
+        const constexpr size_t ContractGrainSize = 1;
+        const constexpr size_t NeighboursGrainSize = 1;
+        const constexpr size_t DeleteGrainSize = 1;
 
         const NodeID number_of_nodes = contractor_graph->GetNumberOfNodes();
         util::Percent p(number_of_nodes);
@@ -297,7 +268,7 @@ class GraphContractor
         ThreadDataContainer thread_data_list(number_of_nodes);
 
         NodeID number_of_contracted_nodes = 0;
-        std::vector<NodePriorityData> node_data;
+        std::vector<NodeDepth> node_depth;
         std::vector<float> node_priorities;
         is_core_node.resize(number_of_nodes, false);
 
@@ -321,20 +292,20 @@ class GraphContractor
         }
         else
         {
-            node_data.resize(number_of_nodes);
+            node_depth.resize(number_of_nodes, 0);
             node_priorities.resize(number_of_nodes);
             node_levels.resize(number_of_nodes);
 
             std::cout << "initializing elimination PQ ..." << std::flush;
             tbb::parallel_for(tbb::blocked_range<int>(0, number_of_nodes, PQGrainSize),
-                              [this, &node_priorities, &node_data,
+                              [this, &node_priorities, &node_depth,
                                &thread_data_list](const tbb::blocked_range<int> &range)
                               {
                                   ContractorThreadData *data = thread_data_list.getThreadData();
                                   for (int x = range.begin(), end = range.end(); x != end; ++x)
                                   {
                                       node_priorities[x] =
-                                          this->EvaluateNodePriority(data, &node_data[x], x);
+                                          this->EvaluateNodePriority(data, node_depth[x], x);
                                   }
                               });
             std::cout << "ok" << std::endl;
@@ -572,7 +543,7 @@ class GraphContractor
                 tbb::parallel_for(
                     tbb::blocked_range<int>(begin_independent_nodes_idx, end_independent_nodes_idx,
                                             NeighboursGrainSize),
-                    [this, &node_priorities, &remaining_nodes, &node_data,
+                    [this, &node_priorities, &remaining_nodes, &node_depth,
                      &thread_data_list](const tbb::blocked_range<int> &range)
                     {
                         ContractorThreadData *data = thread_data_list.getThreadData();
@@ -580,39 +551,10 @@ class GraphContractor
                              ++position)
                         {
                             NodeID x = remaining_nodes[position].id;
-                            this->UpdateNodeNeighbours(node_priorities, node_data, data, x);
+                            this->UpdateNodeNeighbours(node_priorities, node_depth, data, x);
                         }
                     });
             }
-
-            // remove contracted nodes from the pool
-            number_of_contracted_nodes += end_independent_nodes_idx - begin_independent_nodes_idx;
-            remaining_nodes.resize(begin_independent_nodes_idx);
-            //            unsigned maxdegree = 0;
-            //            unsigned avgdegree = 0;
-            //            unsigned mindegree = SPECIAL_NODEID;
-            //            unsigned quaddegree = 0;
-            //
-            //            for(unsigned i = 0; i < remaining_nodes.size(); ++i) {
-            //                unsigned degree = contractor_graph->EndEdges(remaining_nodes[i].id)
-            //                -
-            //                contractor_graph->BeginEdges(remaining_nodes[i].first);
-            //                if(degree > maxdegree)
-            //                    maxdegree = degree;
-            //                if(degree < mindegree)
-            //                    mindegree = degree;
-            //
-            //                avgdegree += degree;
-            //                quaddegree += (degree*degree);
-            //            }
-            //
-            //            avgdegree /= std::max((unsigned)1,(unsigned)remaining_nodes.size() );
-            //            quaddegree /= std::max((unsigned)1,(unsigned)remaining_nodes.size() );
-            //
-            //            util::SimpleLogger().Write() << "rest: " << remaining_nodes.size() << ",
-            //            max: "
-            //            << maxdegree << ", min: " << mindegree << ", avg: " << avgdegree << ",
-            //            quad: " << quaddegree;
 
             p.printStatus(number_of_contracted_nodes);
             ++current_level;
@@ -750,7 +692,7 @@ class GraphContractor
             // New Node discovered -> Add to Heap + Node Info Storage
             if (!heap.WasInserted(to))
             {
-                heap.Insert(to, to_distance, ContractorHeapData(current_hop, false));
+                heap.Insert(to, to_distance, ContractorHeapData {current_hop, false});
             }
             // Found a shorter Path -> Update distance
             else if (to_distance < heap.GetKey(to))
@@ -800,7 +742,7 @@ class GraphContractor
     }
 
     inline float EvaluateNodePriority(ContractorThreadData *const data,
-                                      NodePriorityData *const node_data,
+                                      const NodeDepth node_depth,
                                       const NodeID node)
     {
         ContractionStats stats;
@@ -812,14 +754,14 @@ class GraphContractor
         float result;
         if (0 == (stats.edges_deleted_count * stats.original_edges_deleted_count))
         {
-            result = 1.f * node_data->depth;
+            result = 1.f * node_depth;
         }
         else
         {
             result = 2.f * (((float)stats.edges_added_count) / stats.edges_deleted_count) +
                      4.f * (((float)stats.original_edges_added_count) /
                             stats.original_edges_deleted_count) +
-                     1.f * node_data->depth;
+                     1.f * node_depth;
         }
         BOOST_ASSERT(result >= 0);
         return result;
@@ -857,7 +799,7 @@ class GraphContractor
             }
 
             heap.Clear();
-            heap.Insert(source, 0, ContractorHeapData());
+            heap.Insert(source, 0, ContractorHeapData {});
             int max_distance = 0;
             unsigned number_of_targets = 0;
 
@@ -912,7 +854,7 @@ class GraphContractor
                 max_distance = std::max(max_distance, path_distance);
                 if (!heap.WasInserted(target))
                 {
-                    heap.Insert(target, INVALID_EDGE_WEIGHT, ContractorHeapData(0, true));
+                    heap.Insert(target, INVALID_EDGE_WEIGHT, ContractorHeapData {0, true});
                     ++number_of_targets;
                 }
             }
@@ -1030,7 +972,7 @@ class GraphContractor
     }
 
     inline bool UpdateNodeNeighbours(std::vector<float> &priorities,
-                                     std::vector<NodePriorityData> &node_data,
+                                     std::vector<NodeDepth> &node_depth,
                                      ContractorThreadData *const data,
                                      const NodeID node)
     {
@@ -1046,7 +988,7 @@ class GraphContractor
                 continue;
             }
             neighbours.push_back(u);
-            node_data[u].depth = (std::max)(node_data[node].depth + 1, node_data[u].depth);
+            node_depth[u] = std::max(node_depth[node] + 1, node_depth[u]);
         }
         // eliminate duplicate entries ( forward + backward edges )
         std::sort(neighbours.begin(), neighbours.end());
@@ -1055,7 +997,7 @@ class GraphContractor
         // re-evaluate priorities of neighboring nodes
         for (const NodeID u : neighbours)
         {
-            priorities[u] = EvaluateNodePriority(data, &(node_data)[u], u);
+            priorities[u] = EvaluateNodePriority(data, node_depth[u], u);
         }
         return true;
     }
