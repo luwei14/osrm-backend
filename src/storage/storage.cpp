@@ -331,8 +331,7 @@ int Storage::Run()
     // allocate shared memory block
     util::SimpleLogger().Write() << "allocating shared memory of "
                                  << shared_layout_ptr->GetSizeOfLayout() << " bytes";
-    SharedMemory *shared_memory =
-        makeSharedMemory(data_region, shared_layout_ptr->GetSizeOfLayout());
+    auto *shared_memory = makeSharedMemory(data_region, shared_layout_ptr->GetSizeOfLayout());
     char *shared_memory_ptr = static_cast<char *>(shared_memory->Ptr());
 
     // read actual data into shared memory object //

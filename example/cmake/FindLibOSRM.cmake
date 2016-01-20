@@ -35,5 +35,5 @@ set(LibOSRM_INCLUDE_DIRS ${LibOSRM_INCLUDE_DIR})
 include(FindPackageHandleStandardArgs)
 # handle the QUIETLY and REQUIRED arguments and set LIBOSRM_FOUND to TRUE
 # if all listed variables are TRUE
-find_package_handle_standard_args(LibOSRM  DEFAULT_MSG
+find_package_handle_standard_args(LibOSRM DEFAULT_MSG
                                 LibOSRM_LIBRARY LibOSRM_INCLUDE_DIR)

@@ -7,6 +7,7 @@
 #include <utility>
 #include <iostream>
 #include <exception>
+#include <cstdlib>
 
 int main(int argc, const char *argv[]) try
 {
@@ -14,6 +15,7 @@ int main(int argc, const char *argv[]) try
     {
         std::cerr << "Error: Not enough arguments." << std::endl
                   << "Run " << argv[0] << " data.osrm" << std::endl;
+        return EXIT_FAILURE;
     }
 
     osrm::EngineConfig engine_config;
@@ -52,10 +54,10 @@ int main(int argc, const char *argv[]) try
         std::cout << "duration: " << duration << std::endl;
         std::cout << "distance: " << distance << std::endl;
     }
-    return 0;
+    return EXIT_SUCCESS;
 }
-catch (std::exception &current_exception)
+catch (const std::exception &current_exception)
 {
     std::cout << "exception: " << current_exception.what();
-    return -1;
+    return EXIT_FAILURE;
 }
