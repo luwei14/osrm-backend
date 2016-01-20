@@ -164,10 +164,8 @@ catch (const std::bad_alloc &e)
     util::SimpleLogger().Write(logWARNING) << "[exception] " << e.what();
     util::SimpleLogger().Write(logWARNING)
         << "Please provide more memory or consider using a larger swapfile";
-    return EXIT_FAILURE;
 }
 catch (const std::exception &e)
 {
     util::SimpleLogger().Write(logWARNING) << "[exception] " << e.what();
-    return EXIT_FAILURE;
 }

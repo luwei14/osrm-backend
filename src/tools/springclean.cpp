@@ -54,33 +54,30 @@ void springclean()
 }
 }
 
-int main()
+int main() try
 {
     osrm::util::LogPolicy::GetInstance().Unmute();
-    try
-    {
-        osrm::util::SimpleLogger().Write() << "Releasing all locks";
-        osrm::util::SimpleLogger().Write() << "ATTENTION! BE CAREFUL!";
-        osrm::util::SimpleLogger().Write() << "----------------------";
-        osrm::util::SimpleLogger().Write()
-            << "This tool may put osrm-routed into an undefined state!";
-        osrm::util::SimpleLogger().Write()
-            << "Type 'Y' to acknowledge that you know what your are doing.";
-        osrm::util::SimpleLogger().Write()
-            << "\n\nDo you want to purge all shared memory allocated "
-            << "by osrm-datastore? [type 'Y' to confirm]";
+    osrm::util::SimpleLogger().Write() << "Releasing all locks";
+    osrm::util::SimpleLogger().Write() << "ATTENTION! BE CAREFUL!";
+    osrm::util::SimpleLogger().Write() << "----------------------";
+    osrm::util::SimpleLogger().Write()
+        << "This tool may put osrm-routed into an undefined state!";
+    osrm::util::SimpleLogger().Write()
+        << "Type 'Y' to acknowledge that you know what your are doing.";
+    osrm::util::SimpleLogger().Write()
+        << "\n\nDo you want to purge all shared memory allocated "
+        << "by osrm-datastore? [type 'Y' to confirm]";
 
-        const auto letter = getchar();
-        if (letter != 'Y')
-        {
-            osrm::util::SimpleLogger().Write() << "aborted.";
-            return 0;
-        }
-        osrm::tools::springclean();
-    }
-    catch (const std::exception &e)
+    const auto letter = getchar();
+    if (letter != 'Y')
     {
-        osrm::util::SimpleLogger().Write(logWARNING) << "[excpetion] " << e.what();
+        osrm::util::SimpleLogger().Write() << "aborted.";
+        return EXIT_SUCCESS;
     }
-    return 0;
+    osrm::tools::springclean();
+    return EXIT_SUCCESS;
+}
+catch (const std::exception &e)
+{
+    osrm::util::SimpleLogger().Write(logWARNING) << "[excpetion] " << e.what();
 }

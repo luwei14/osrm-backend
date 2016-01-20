@@ -1,9 +1,10 @@
 #ifndef STORAGE_HPP
 #define STORAGE_HPP
 
-#include <boost/filesystem.hpp>
+#include <boost/filesystem/path.hpp>
 
 #include <unordered_map>
+#include <string>
 
 namespace osrm
 {

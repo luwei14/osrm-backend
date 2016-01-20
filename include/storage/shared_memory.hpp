@@ -323,7 +323,7 @@ class SharedMemory
 #endif
 
 template <typename IdentifierT, typename LockFileT = OSRMLockFile>
-static SharedMemory *makeSharedMemory(const IdentifierT &id,
+SharedMemory *makeSharedMemory(const IdentifierT &id,
     const uint64_t size = 0,
     bool read_write = false,
     bool remove_prev = true)
@@ -340,7 +340,6 @@ static SharedMemory *makeSharedMemory(const IdentifierT &id,
       else
       {
         boost::filesystem::ofstream ofs(lock_file());
-        ofs.close();
       }
     }
     return new SharedMemory(lock_file(), id, size, read_write, remove_prev);

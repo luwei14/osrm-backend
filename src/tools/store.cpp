@@ -270,7 +270,6 @@ catch (const std::bad_alloc &e)
     util::SimpleLogger().Write(logWARNING)
         << "Please provide more memory or disable locking the virtual "
            "address space (note: this makes OSRM swap, i.e. slow)";
-    return EXIT_FAILURE;
 }
 catch (const std::exception &e)
 {
