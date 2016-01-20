@@ -68,6 +68,13 @@ bool generateDataStoreOptions(const int argc,
         boost::filesystem::basename(argv[0]) + " [<options>] <configuration>");
     visible_options.add(generic_options).add(config_options);
 
+    // print help options if no infile is specified
+    if (argc < 2)
+    {
+        util::SimpleLogger().Write() << visible_options;
+        return false;
+    }
+
     // parse command line options
     boost::program_options::variables_map option_variables;
     boost::program_options::store(boost::program_options::command_line_parser(argc, argv)
