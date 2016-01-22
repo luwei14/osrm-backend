@@ -61,6 +61,8 @@ struct RouteParameters
 
     void SetGPSPrecision(const double precision);
 
+    void SetMatchingPruneFactor(const double factor);
+
     void SetDeprecatedAPIFlag(const std::string &);
 
     void SetChecksum(const unsigned check_sum);
@@ -105,6 +107,7 @@ struct RouteParameters
     bool classify;
     double matching_beta;
     double gps_precision;
+    double matching_prune_factor;
     unsigned check_sum;
     short num_results;
     std::string service;
