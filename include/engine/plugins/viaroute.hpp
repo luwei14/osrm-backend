@@ -109,7 +109,40 @@ template <class DataFacadeT> class ViaRoutePlugin final : public BasePlugin
                 json_overview = makeCoordinateArray(overview.begin(), overview.end());
             }
         }
-        auto json_route = makeRoute(route, makeRouteLegs(std::move(legs), leg_geometries), std::move(json_overview));
+        auto shortest_route = makeRoute(route, makeRouteLegs(std::move(legs), leg_geometries), std::move(json_overview));
+        json_routes.values.push_back(std::move(shortest_route));
+        if (raw_route.has_alternative())
+        {
+            BOOST_ASSERT(raw_route.segment_end_coodinates.size() == 1);
+            std::vector<RouteLeg> alternative_legs(1);
+            std::vector<LegGeometry> alternative_geometries(1);
+
+            const auto& phantoms = raw_route.segment_end_coordinates.front();
+            const auto& path_data = raw_route.unpacked_alternative;
+
+            alternative_geometries.front() = geometry_assembler(path_data, phantoms.source_phantom, phantoms.target_phantom);
+            alternative_legs.front() = leg_asssembler(
+                path_data, phantoms,
+                raw_route.source_traversed_in_reverse.front(),
+                raw_route.alt_target_traversed_in_reverse.front(), alternative_geometries.front());
+            auto alternative_route = route_assembler(alternative_legs);
+            boost::optional<util::json::Value> json_alternative_overview;
+            if(parameters.geometry)
+            {
+                auto overview = overview_assembler(alternative_geometries);
+                if (parameters.compression)
+                {
+                    json_overview = makePolyline(overview.begin(), overview.end());
+                }
+                else
+                {
+                    json_overview = makeCoordinateArray(overview.begin(), overview.end());
+                }
+            }
+            auto alternate_route = makeRoute(route, makeRouteLegs(std::move(alternative_legs), alternative_geometries), std::move(json_overview));
+            json_routes.values.push_back(std::move(alternative_route));
+        }
+
         return json_routes;
     }
 
