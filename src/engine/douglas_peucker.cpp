@@ -57,14 +57,13 @@ struct CoordinatePairCalculator
 };
 }
 
-void douglasPeucker(std::vector<SegmentInformation>::iterator begin,
-                    std::vector<SegmentInformation>::iterator end,
+std::vector<util::FixedPointCoordinate>
+douglasPeucker(std::vector<util::FixedPointCoordinate>::iterator begin,
+               std::vector<util::FixedPointCoordinate>::iterator end,
                     const unsigned zoom_level)
 {
-    using Iter = decltype(begin);
-    using GeometryRange = std::pair<Iter, Iter>;
-
-    std::stack<GeometryRange> recursion_stack;
+    BOOST_ASSERT_MSG(zoom_level < detail::DOUGLAS_PEUCKER_THRESHOLDS_SIZE,
+            "unsupported zoom level");
 
     const auto size = std::distance(begin, end);
     if (size < 2)
@@ -72,29 +71,15 @@ void douglasPeucker(std::vector<SegmentInformation>::iterator begin,
         return;
     }
 
-    begin->necessary = true;
-    std::prev(end)->necessary = true;
+    std::vector<bool> is_necessary(size, false);
+    BOOST_ASSERT(is_necessary.size() >= 2);
+    is_necessary.front() = true;
+    is_necessary.back() = true;
+    using GeometryRange = std::pair<std::size_t, std::size_t>;
 
-    {
-        BOOST_ASSERT_MSG(zoom_level < detail::DOUGLAS_PEUCKER_THRESHOLDS_SIZE,
-                         "unsupported zoom level");
-        auto left_border = begin;
-        auto right_border = std::next(begin);
-        // Sweep over array and identify those ranges that need to be checked
-        do
-        {
-            // traverse list until new border element found
-            if (right_border->necessary)
-            {
-                // sanity checks
-                BOOST_ASSERT(left_border->necessary);
-                BOOST_ASSERT(right_border->necessary);
-                recursion_stack.emplace(left_border, right_border);
-                left_border = right_border;
-            }
-            ++right_border;
-        } while (right_border != end);
-    }
+    std::stack<GeometryRange> recursion_stack;
+
+    recursion_stack.emplace_back(0UL, size-1);
 
     // mark locations as 'necessary' by divide-and-conquer
     while (!recursion_stack.empty())
@@ -103,25 +88,24 @@ void douglasPeucker(std::vector<SegmentInformation>::iterator begin,
         const GeometryRange pair = recursion_stack.top();
         recursion_stack.pop();
         // sanity checks
-        BOOST_ASSERT_MSG(pair.first->necessary, "left border must be necessary");
-        BOOST_ASSERT_MSG(pair.second->necessary, "right border must be necessary");
-        BOOST_ASSERT_MSG(std::distance(pair.second, end) > 0, "right border outside of geometry");
-        BOOST_ASSERT_MSG(std::distance(pair.first, pair.second) >= 0,
-                         "left border on the wrong side");
+        BOOST_ASSERT_MSG(is_necessary[pair.first], "left border must be necessary");
+        BOOST_ASSERT_MSG(is_necessary[pair.second], "right border must be necessary");
+        BOOST_ASSERT_MSG(pair.second < size, "right border outside of geometry");
+        BOOST_ASSERT_MSG(pair.first <= pair.second, "left border on the wrong side");
 
         int max_int_distance = 0;
-        auto farthest_entry_it = pair.second;
-        const CoordinatePairCalculator dist_calc(pair.first->location, pair.second->location);
+        auto farthest_entry_index = pair.second;
+        const CoordinatePairCalculator dist_calc(begin[pair.first], begin[pair.second]);
 
         // sweep over range to find the maximum
-        for (auto it = std::next(pair.first); it != pair.second; ++it)
+        for (auto idx = pair.first + 1; it != pair.second; ++it)
         {
-            const int distance = dist_calc(it->location);
+            const int distance = dist_calc(begin[idx]);
             // found new feasible maximum?
             if (distance > max_int_distance &&
                 distance > detail::DOUGLAS_PEUCKER_THRESHOLDS[zoom_level])
             {
-                farthest_entry_it = it;
+                farthest_entry_index = idx;
                 max_int_distance = distance;
             }
         }
@@ -130,17 +114,27 @@ void douglasPeucker(std::vector<SegmentInformation>::iterator begin,
         if (max_int_distance > detail::DOUGLAS_PEUCKER_THRESHOLDS[zoom_level])
         {
             //  mark idx as necessary
-            farthest_entry_it->necessary = true;
-            if (1 < std::distance(pair.first, farthest_entry_it))
+            is_necessary[farthest_entry_index] = true;
+            if (pair.first < farthest_entry_index)
             {
-                recursion_stack.emplace(pair.first, farthest_entry_it);
+                recursion_stack.emplace(pair.first, farthest_entry_index);
             }
-            if (1 < std::distance(farthest_entry_it, pair.second))
+            if (farthest_entry_index < pair.second)
             {
-                recursion_stack.emplace(farthest_entry_it, pair.second);
+                recursion_stack.emplace(farthest_entry_index, pair.second);
             }
         }
     }
+
+    std::vector<util::FixedPointCoordinate> simplified_geometry;
+    for (auto idx : boost::irange(0UL, size))
+    {
+        if (is_necessary[idx])
+        {
+            simplified_geometry.push_back(begin[idx]);
+        }
+    }
+    return simplified_geometry;
 }
 } // ns engine
 } // ns osrm

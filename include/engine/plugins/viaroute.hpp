@@ -3,16 +3,19 @@
 
 #include "engine/plugins/plugin_base.hpp"
 
-#include "engine/api_response_generator.hpp"
+#include "engine/response_objects.hpp"
+#include "engine/guidance/step_assembler.hpp"
+#include "engine/guidance/geometry_assembler.hpp"
+#include "engine/guidance/leg_assembler.hpp"
+#include "engine/guidance/route_assembler.hpp"
+
 #include "engine/object_encoder.hpp"
 #include "engine/search_engine.hpp"
 #include "util/for_each_pair.hpp"
 #include "util/integer_range.hpp"
 #include "util/json_renderer.hpp"
 #include "util/make_unique.hpp"
-#include "util/simple_logger.hpp"
-#include "util/timing_util.hpp"
-#include "osrm/json_container.hpp"
+#include "util/json_container.hpp"
 
 #include <cstdlib>
 
@@ -35,10 +38,93 @@ template <class DataFacadeT> class ViaRoutePlugin final : public BasePlugin
     std::unique_ptr<SearchEngine<DataFacadeT>> search_engine_ptr;
     DataFacadeT *facade;
     int max_locations_viaroute;
+    guidance::StepAssembler<DataFacadeT> step_assembler;
+    guidance::LegAssembler<DataFacadeT> leg_asssembler;
+    guidance::GeometryAssembler<DataFacadeT> geometry_assembler;
+    guidance::RouteAssembler<DataFacadeT> route_assembler;
+    guidance::OverviewAssembler<DataFacadeT> overview_assembler;
+
+    util::json::Array MakeWaypoints(const RouteParameters &parameters,
+                                    const InternalRouteResult &raw_route) const
+    {
+        util::json::Array waypoints;
+        auto coordinate_iter = parameters.coordinates.begin();
+
+        const auto &first_phantoms = raw_route.segment_end_coordinates.front();
+        waypoints.values.push_back(makeWaypoint(
+            first_phantoms.source_phantom.location,
+            facade->get_name_for_id(first_phantoms.source_phantom.name_id),
+            Hint{*coordinate_iter++, first_phantoms.source_phantom, facade->GetChecksum()}));
+        for (auto phantoms : raw_route.segment_end_coordinates)
+        {
+            waypoints.values.push_back(makeWaypoint(
+                phantoms.target_phantom.location,
+                facade->get_name_for_id(phantoms.target_phantom.name_id),
+                Hint{*coordinate_iter++, phantoms.target_phantom, facade->GetChecksum()}));
+        }
+
+        return waypoints;
+    }
+
+    util::json::Array MakeRoutes(const RouteParameters &parameters,
+                                 const InternalRouteResult &raw_route) const
+    {
+        util::json::Array json_routes;
+        // currently the raw_route has a weird format that boundles routes
+        auto number_of_routes = raw_route.has_alterntaive() ? 2 : 1;
+        json_routes.reserve(number_of_routes);
+
+        std::vector<RouteLeg> legs;
+        std::vector<LegGeometry> leg_geometries;
+        legs.reserve(raw_route.segment_end_coordinates.size());
+        leg_geometries.reserve(raw_route.segment_end_coordinates.size());
+        for (auto idx : boost::irange(0UL, raw_route.segment_end_coordinates.size()))
+        {
+            leg_geometries.push_back(
+                geometry_assembler(leg, phantoms.source_phantom, phantoms.target_phantom));
+            legs.push_back(leg_asssembler(
+                raw_route.unpacked_path_segments[idx], raw_route.segment_end_coordinates[idx],
+                raw_route.source_traversed_in_reverse[idx],
+                raw_route.alt_target_traversed_in_reverse[idx], leg_geometries.back()));
+
+            if (parameters.print_instructions)
+            {
+                legs.back().steps = boost::make_option(
+                    step_assembler(legs.back(), phantoms.source_phantom, phantoms.target_phantom,
+                                   source_traversed_in_reverse, target_traversed_in_reverse,
+                                   leg_geometries.back()));
+            }
+        }
+        auto route = route_assembler(legs);
+        boost::optional<util::json::Value> json_overview;
+        if(parameters.geometry)
+        {
+            auto overview = overview_assembler(leg_geometries);
+            if (parameters.compression)
+            {
+                json_overview = makePolyline(overview.begin(), overview.end());
+            }
+            else
+            {
+                json_overview = makeCoordinateArray(overview.begin(), overview.end());
+            }
+        }
+        auto json_route = makeRoute(route, makeRouteLegs(std::move(legs), leg_geometries), std::move(json_overview));
+        return json_routes;
+    }
+
+    void MakeResponse(const RouteParameters &parameters,
+                      const InternalRouteResult &raw_route,
+                      util::json::Object &response) const
+    {
+        response.values["waypoints"] = MakeWaypoints(parameters, raw_route);
+        response.values["routes"] = MakeRoutes(parameters, raw_route);
+    }
 
   public:
     explicit ViaRoutePlugin(DataFacadeT *facade, int max_locations_viaroute)
-        : descriptor_string("viaroute"), facade(facade),
+        : descriptor_string("viaroute"), facade(facade), step_assembler(facade),
+          leg_asssembler(facade), geometry_assembler(facade), route_assembler(facade),
           max_locations_viaroute(max_locations_viaroute)
     {
         search_engine_ptr = util::make_unique<SearchEngine<DataFacadeT>>(facade);
@@ -54,25 +140,24 @@ template <class DataFacadeT> class ViaRoutePlugin final : public BasePlugin
         if (max_locations_viaroute > 0 &&
             (static_cast<int>(route_parameters.coordinates.size()) > max_locations_viaroute))
         {
-            json_result.values["status_message"] =
-                "Number of entries " + std::to_string(route_parameters.coordinates.size()) +
-                " is higher than current maximum (" + std::to_string(max_locations_viaroute) + ")";
-            return Status::Error;
+            return Error("too-big", "Number of entries " +
+                                        std::to_string(route_parameters.coordinates.size()) +
+                                        " is higher than current maximum (" +
+                                        std::to_string(max_locations_viaroute) + ")",
+                         json_result);
         }
 
         if (!check_all_coordinates(route_parameters.coordinates))
         {
-            json_result.values["status_message"] = "Invalid coordinates";
-            return Status::Error;
+            return Error("invalid-value", "Invalid coordinate value.", json_result);
         }
 
         const auto &input_bearings = route_parameters.bearings;
         if (input_bearings.size() > 0 &&
             route_parameters.coordinates.size() != input_bearings.size())
         {
-            json_result.values["status_message"] =
-                "Number of bearings does not match number of coordinate";
-            return Status::Error;
+            return Error("invalid-parameter",
+                         "Number of bearings does not match number of coordinate", json_result);
         }
 
         std::vector<PhantomNodePair> phantom_node_pair_list(route_parameters.coordinates.size());
@@ -99,10 +184,10 @@ template <class DataFacadeT> class ViaRoutePlugin final : public BasePlugin
             // we didn't found a fitting node, return error
             if (!phantom_node_pair_list[i].first.IsValid(facade->GetNumberOfNodes()))
             {
-                json_result.values["status_message"] =
-                    std::string("Could not find a matching segment for coordinate ") +
-                    std::to_string(i);
-                return Status::NoSegment;
+                return Error("no-segment",
+                             std::string("Could not find a matching segment for coordinate ") +
+                                 std::to_string(i),
+                             json_result);
             }
             BOOST_ASSERT(phantom_node_pair_list[i].first.IsValid(facade->GetNumberOfNodes()));
             BOOST_ASSERT(phantom_node_pair_list[i].second.IsValid(facade->GetNumberOfNodes()));
@@ -143,7 +228,7 @@ template <class DataFacadeT> class ViaRoutePlugin final : public BasePlugin
         {
             auto generator = MakeApiResponseGenerator(facade);
             generator.DescribeRoute(route_parameters, raw_route, json_result);
-            json_result.values["status_message"] = "Found route between points";
+            json_result.values["code"] = "ok";
         }
         else
         {
@@ -157,13 +242,11 @@ template <class DataFacadeT> class ViaRoutePlugin final : public BasePlugin
 
             if (not_in_same_component)
             {
-                json_result.values["status_message"] = "Impossible route between points";
-                return Status::EmptyResult;
+                return Error("no-route", "Impossible route between points", json_result);
             }
             else
             {
-                json_result.values["status_message"] = "No route found between points";
-                return Status::Error;
+                return Error("no-route", "No route found between points", json_result);
             }
         }
 

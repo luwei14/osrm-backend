@@ -1,0 +1,86 @@
+#ifndef GEOMETRY_ASSEMBLER_HPP
+#define GEOMETRY_ASSEMBLER_HPP
+
+#include "engine/internal_route_result.hpp"
+#include "engine/phantom_node.hpp"
+#include "engine/guidance/route_step.hpp"
+#include "engine/guidance/route_geometry.hpp"
+#include "util/coordinate_calculation.hpp"
+#include "util/coordinate.hpp"
+#include "extractor/turn_instructions.hpp"
+#include "extractor/travel_mode.hpp"
+
+#include <vector>
+
+namespace osrm
+{
+namespace engine
+{
+namespace guidance
+{
+
+// Extracts the geometry for each segment and calculates the traveled distance
+template <typename DataFacadeT> class GeometryAssembler
+{
+  public:
+    GeometryAssembler(const DataFacadeT *facade) : facade(facade){};
+
+    // Combines the geometry form the phantom node with the PathData
+    // to the full route geometry.
+    //
+    // turn    0   1   2   3   4
+    //         s...x...y...z...t
+    //         |---|segment 0
+    //             |---| segment 1
+    //                 |---| segment 2
+    //                     |---| segment 3
+    RouteGeometry operator()(const std::vector<PathData> &leg_data,
+                                      const PhantomNode &source_node,
+                                      const PhantomNode &target_node) const
+    {
+        RouteGeometry geometry;
+
+        // segment 0 first and last
+        geometry.segment_offsets.push_back(0);
+        geometry.locations.push_back(source_node.location);
+
+        auto current_distance = 0.;
+        auto prev_coordinate = geometry.locations.front();
+        for (const auto & path_point : leg_data)
+        {
+            auto coordinate = facade->GetCoordinateForNode(path_point.turn_via_node);
+            current_distance += util::coordinate_calculation::haversineDistance(prev_coordinate, coordinate);
+
+            if (path_point.turn_instruction != extractor::TurnInstruction::None)
+            {
+                geometry.segment_distances.push_back(current_distance);
+                geometry.segment_offsets.push_back(geometry.locations.size());
+                current_distance = 0.;
+            }
+
+            prev_coordinate = coordinate;
+            geometry.locations.push_back(std::move(coordinate));
+        }
+        current_distance += util::coordinate_calculation::haversineDistance(prev_coordinate, target_node.location);
+        // segment leading to the target node
+        geometry.segment_distances.push_back(current_distance);
+        geometry.segment_offsets.push_back(geometry.locations.size());
+        geometry.locations.push_back(target_node.location);
+
+        // senitel offset element
+        geometry.segment_offsets.push_back(geometry.locations.size());
+
+        BOOST_ASSERT(geometry.segment_distanaces.size() == geometry.segment_offsets.size() - 1);
+        BOOST_ASSERT(geometry.locations.size() < geometry.segment_distances.size());
+
+        return geometry;
+    }
+
+  private:
+    DataFacadeT facade;
+};
+}
+}
+}
+
+#endif

@@ -526,7 +526,7 @@ void EdgeBasedGraphFactory::GenerateEdgeExpandedEdges(
                     (edge_is_compressed ? m_compressed_edge_container.GetPositionForID(e1)
                                         : node_v),
                     edge_data1.name_id, turn_instruction, edge_is_compressed,
-                    edge_data2.travel_mode);
+                    edge_data1.travel_mode);
 
                 ++original_edges_counter;
 
@@ -675,42 +675,20 @@ TurnInstruction EdgeBasedGraphFactory::AnalyzeTurn(const NodeID node_u,
     const EdgeData &data1 = m_node_based_graph->GetEdgeData(edge1);
     const EdgeData &data2 = m_node_based_graph->GetEdgeData(edge2);
 
-    // roundabouts need to be handled explicitely
     if (data1.roundabout && data2.roundabout)
+    // Does turn start or end on roundabout?
     {
-        // Is a turn possible? If yes, we stay on the roundabout!
-        if (1 == m_node_based_graph->GetDirectedOutDegree(node_v))
-        {
-            // No turn possible.
-            return TurnInstruction::NoTurn;
-        }
         return TurnInstruction::StayOnRoundAbout;
     }
-    // Does turn start or end on roundabout?
-    if (data1.roundabout || data2.roundabout)
+    else if (data2.roundabout)
+    // We are entering the roundabout
     {
-        // We are entering the roundabout
-        if ((!data1.roundabout) && data2.roundabout)
-        {
-            return TurnInstruction::EnterRoundAbout;
-        }
-        // We are leaving the roundabout
-        if (data1.roundabout && (!data2.roundabout))
-        {
-            return TurnInstruction::LeaveRoundAbout;
-        }
+        return TurnInstruction::EnterRoundAbout;
     }
-
-    // If street names stay the same and if we are certain that it is not a
-    // a segment of a roundabout, we skip it.
-    if (data1.name_id == data2.name_id && data1.travel_mode == data2.travel_mode)
+    else if (data1.roundabout)
+    // We are leaving the roundabout
     {
-        // TODO: Here we should also do a small graph exploration to check for
-        //      more complex situations
-        if (0 != data1.name_id || m_node_based_graph->GetOutDegree(node_v) <= 2)
-        {
-            return TurnInstruction::NoTurn;
-        }
+        return TurnInstruction::LeaveRoundAbout;
     }
 
     return getTurnDirection(angle);

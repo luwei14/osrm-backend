@@ -8,35 +8,40 @@ namespace extractor
 
 enum class TurnInstruction : unsigned char
 {
-    NoTurn = 0,
-    GoStraight,
-    TurnSlightRight,
+    None = 0,
+    Continue,
+    BearRight,
     TurnRight,
-    TurnSharpRight,
+    SharpRight,
     UTurn,
-    TurnSharpLeft,
+    SharpLeft,
     TurnLeft,
-    TurnSlightLeft,
-    ReachViaLocation,
-    HeadOn,
+    BearLeft,
+    ReachedWaypointLocation,
     EnterRoundAbout,
     LeaveRoundAbout,
     StayOnRoundAbout,
-    StartAtEndOfStreet,
-    ReachedYourDestination,
-    EnterAgainstAllowedDirection,
-    LeaveAgainstAllowedDirection,
-    InverseAccessRestrictionFlag = 127,
-    AccessRestrictionFlag = 128,
-    AccessRestrictionPenalty = 129
+    Depart,
+    Arrive
 };
 
 // Translates between angles and their human-friendly directional representation
+//               180°
+//               (w)
+//          o     ^     o
+//        o       ^       o
+//                ^
+// 270°  o       (v)       o  90°
+//                ^
+//        o       ^       o
+//          o     ^     o
+//               (u)
+//                0°
 inline TurnInstruction getTurnDirection(const double angle)
 {
     if (angle >= 23 && angle < 67)
     {
-        return TurnInstruction::TurnSharpRight;
+        return TurnInstruction::SharpRight;
     }
     if (angle >= 67 && angle < 113)
     {
@@ -44,15 +49,15 @@ inline TurnInstruction getTurnDirection(const double angle)
     }
     if (angle >= 113 && angle < 158)
     {
-        return TurnInstruction::TurnSlightRight;
+        return TurnInstruction::BearRight;
     }
     if (angle >= 158 && angle < 202)
     {
-        return TurnInstruction::GoStraight;
+        return TurnInstruction::Continue;
     }
     if (angle >= 202 && angle < 248)
     {
-        return TurnInstruction::TurnSlightLeft;
+        return TurnInstruction::BearLeft;
     }
     if (angle >= 248 && angle < 292)
     {
@@ -60,21 +65,11 @@ inline TurnInstruction getTurnDirection(const double angle)
     }
     if (angle >= 292 && angle < 336)
     {
-        return TurnInstruction::TurnSharpLeft;
+        return TurnInstruction::SharpLeft;
     }
     return TurnInstruction::UTurn;
 }
 
-// Decides if a turn is needed to be done for the current instruction
-inline bool isTurnNecessary(const TurnInstruction turn_instruction)
-{
-    if (TurnInstruction::NoTurn == turn_instruction ||
-        TurnInstruction::StayOnRoundAbout == turn_instruction)
-    {
-        return false;
-    }
-    return true;
-}
 }
 }
 

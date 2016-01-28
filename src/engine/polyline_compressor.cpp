@@ -1,6 +1,8 @@
 #include "engine/polyline_compressor.hpp"
 
+#include <boost/assert.hpp>
 #include <cstddef>
+#include <algorithm>
 
 namespace osrm
 {
@@ -44,31 +46,29 @@ std::string encode(std::vector<int> &numbers)
 }
 } // anonymous ns
 
-std::string polylineEncode(const std::vector<SegmentInformation> &polyline)
+
+std::string encodePolyline(CoordVectorForwardIter begin, CoordVectorForwardIter end)
 {
-    if (polyline.empty())
+    if (std::distance(begin, end) == 0)
     {
         return {};
     }
 
     std::vector<int> delta_numbers;
-    delta_numbers.reserve((polyline.size() - 1) * 2);
+    BOOST_ASSERT(locations.size() > 0);
+    delta_numbers.reserve((std::distance(begin, end) - 1) * 2);
     util::FixedPointCoordinate previous_coordinate = {0, 0};
-    for (const auto &segment : polyline)
+    std::for_each(begin, end, [&delta_numbers, &previous_coordinate](const FixedPointCoordinate loc)
     {
-        if (segment.necessary)
-        {
-            const int lat_diff = segment.location.lat - previous_coordinate.lat;
-            const int lon_diff = segment.location.lon - previous_coordinate.lon;
+            const int lat_diff = loc.lat - previous_coordinate.lat;
+            const int lon_diff = loc.lon - previous_coordinate.lon;
             delta_numbers.emplace_back(lat_diff);
             delta_numbers.emplace_back(lon_diff);
-            previous_coordinate = segment.location;
-        }
-    }
+            previous_coordinate = loc;
+    });
     return encode(delta_numbers);
 }
-
-std::vector<util::FixedPointCoordinate> polylineDecode(const std::string &geometry_string)
+std::vector<util::FixedPointCoordinate> decodePolyline(const std::string &geometry_string)
 {
     std::vector<util::FixedPointCoordinate> new_coordinates;
     int index = 0, len = geometry_string.size();

@@ -44,12 +44,14 @@ const constexpr auto DOUGLAS_PEUCKER_THRESHOLDS_SIZE =
 // Input is vector of pairs. Each pair consists of the point information and a
 // bit indicating if the points is present in the generalization.
 // Note: points may also be pre-selected*/
-void douglasPeucker(std::vector<SegmentInformation>::iterator begin,
-                    std::vector<SegmentInformation>::iterator end,
-                    const unsigned zoom_level);
+std::vector<util::FixedPointCoordinate>
+douglasPeucker(std::vector<util::FixedPointCoordinate>::iterator begin,
+               std::vector<util::FixedPointCoordinate>::iterator end,
+               const unsigned zoom_level);
 
 // Convenience range-based function
-inline void douglasPeucker(std::vector<SegmentInformation> &geometry, const unsigned zoom_level)
+inline std::vector<util::FixedPointCoordinate>
+douglasPeucker(const std::vector<util::FixedPointCoordinate> &geometry, const unsigned zoom_level)
 {
     douglasPeucker(begin(geometry), end(geometry), zoom_level);
 }

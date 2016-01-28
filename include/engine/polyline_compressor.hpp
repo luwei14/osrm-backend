@@ -2,7 +2,6 @@
 #define POLYLINECOMPRESSOR_H_
 
 #include "osrm/coordinate.hpp"
-#include "engine/segment_information.hpp"
 
 #include <string>
 #include <vector>
@@ -11,13 +10,14 @@ namespace osrm
 {
 namespace engine
 {
+using CoordVectorForwardIter = std::vector<FixedPointCoordinate>::const_iterator;
 // Encodes geometry into polyline format.
 // See: https://developers.google.com/maps/documentation/utilities/polylinealgorithm
-std::string polylineEncode(const std::vector<SegmentInformation> &geometry);
+std::string encodePolyline(CoordVectorForwardIter begin, CoordVectorForwardIter end);
 
 // Decodes geometry from polyline format
 // See: https://developers.google.com/maps/documentation/utilities/polylinealgorithm
-std::vector<util::FixedPointCoordinate> polylineDecode(const std::string &polyline);
+std::vector<util::FixedPointCoordinate> decodePolyline(const std::string &polyline);
 }
 }
 
